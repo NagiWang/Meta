@@ -23,7 +23,6 @@ template <> struct rtuple_impl<> {
 
 template <typename Head, typename... Tail>
 struct rtuple_impl<Head, Tail...> : public rtuple_impl<Tail...> {
-	using this_type  = rtuple_impl<Head, Tail...>;
 	using base_type  = rtuple_impl<Tail...>;
 	using value_type = Head;
 
