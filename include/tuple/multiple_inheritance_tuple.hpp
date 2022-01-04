@@ -14,34 +14,31 @@ template <typename...> struct mtuple;
 
 namespace details {
 
-struct empty_class {};
-
 template <std::size_t Index, typename Type>
-struct mtuple_value : empty_class {
-	using this_type  = mtuple_value<Index, Type>;
-	using value_type = Type;
+struct mtuple_value {
+    using value_type = Type;
 
-	value_type m_value;
+    value_type m_value;
 
-	template <typename ValueType>
-	requires std::is_nothrow_constructible_v<value_type, ValueType>
-	constexpr explicit mtuple_value(ValueType&& value) noexcept
-	    : m_value(std::forward<ValueType>(value)) {}
+    template <typename ElemType>
+    requires std::is_nothrow_constructible_v<value_type, ElemType>
+    constexpr explicit mtuple_value(ElemType&& value) noexcept
+        : m_value(std::forward<ElemType>(value)) {}
 
-	constexpr ~mtuple_value() noexcept = default;
+    constexpr ~mtuple_value() noexcept = default;
 };
 
 template <typename, typename...>
 struct mtuple_impl;
 
-template <std::size_t... Index, typename... Types>
-struct mtuple_impl<std::index_sequence<Index...>, Types...> : public mtuple_value<Index, Types>... {
-	// clang-format off
-	template <typename... Values>
-	constexpr explicit mtuple_impl(Values&&... values) noexcept
-	    :  mtuple_value<Index, Types>(std::forward<Values>(values))... {}
-	// clang-format on
-	constexpr ~mtuple_impl() noexcept = default;
+template <std::size_t... Indices, typename... Types>
+struct mtuple_impl<std::index_sequence<Indices...>, Types...> : public mtuple_value<Indices, Types>... {
+    // clang-format off
+    template <typename... Values>
+    constexpr explicit mtuple_impl(Values&&... values) noexcept
+        :  mtuple_value<Indices, Types>(std::forward<Values>(values))... {}
+    // clang-format on
+    constexpr ~mtuple_impl() noexcept = default;
 };
 
 template <std::size_t Index, typename... Types>
@@ -49,21 +46,23 @@ struct mtuple_element;
 
 template <typename Head, typename... Tail>
 struct mtuple_element<0, Head, Tail...> {
-	using type = Head;
+    using type = Head;
 };
-
+// clang-format off
 template <std::size_t Index, typename Head, typename... Tail>
-requires(Index != 0) struct mtuple_element<Index, Head, Tail...> {
-	using type = typename mtuple_element<Index - 1, Tail...>::type;
+requires (Index != 0)
+struct mtuple_element<Index, Head, Tail...> {
+    using type = typename mtuple_element<Index - 1, Tail...>::type;
 };
 
 template <std::size_t Index, typename... Types>
+requires (Index < sizeof...(Types))
 using mtuple_element_t = typename mtuple_element<Index, Types...>::type;
 
-// clang-format off
 template <std::size_t Index, typename ...Types>
+requires (Index < sizeof...(Types))
 struct mtuple_helper {
-	using type = mtuple_value<Index, typename mtuple_element<Index, Types...>::type>;
+	using type = mtuple_value<Index, mtuple_element_t<Index, Types...>>;
 };
 // clang-format on
 
@@ -73,35 +72,46 @@ using mtuple_helper_t = typename mtuple_helper<Index, Types...>::type;
 } // namespace details
 
 template <typename... Types>
-struct mtuple : public details::mtuple_impl<std::make_index_sequence<sizeof...(Types)>, Types...> {
-	using base_type = details::mtuple_impl<std::make_index_sequence<sizeof...(Types)>, Types...>;
+struct mtuple : private details::mtuple_impl<std::make_index_sequence<sizeof...(Types)>, Types...> {
+    using base_type = details::mtuple_impl<std::make_index_sequence<sizeof...(Types)>, Types...>;
 
-	// clang-format off
-	template <typename... Values>
-	requires(sizeof...(Values) == sizeof...(Types))
-	constexpr explicit mtuple(Values&&... values) noexcept
-	    : base_type(std::forward<Values>(values)...) {}
-	// clang-format on
-	constexpr ~mtuple() noexcept = default;
+    // clang-format off
+    template <typename... Values>
+    requires (sizeof...(Values) == sizeof...(Types))
+    constexpr explicit mtuple(Values&&... values) noexcept
+        : base_type(std::forward<Values>(values)...) {}
+    // clang-format on
+    constexpr ~mtuple() noexcept = default;
+
+    template <std::size_t Index, typename... ElemTypes>
+    friend constexpr decltype(auto) get(mtuple<ElemTypes...>& tuple) noexcept;
+
+    template <std::size_t Index, typename... ElemTypes>
+    friend constexpr decltype(auto) get(const mtuple<ElemTypes...>& tuple) noexcept;
+
+    template <std::size_t Index, typename... ElemTypes>
+    friend constexpr decltype(auto) get(mtuple<ElemTypes...>&& tuple) noexcept;
 };
 
-template <std::size_t index, typename... Types>
-constexpr decltype(auto) get(mtuple<Types...>& tuple) noexcept {
-	using impl_type = details::mtuple_helper_t<index, Types...>;
-	return (static_cast<impl_type&>(tuple).m_value);
+template <std::size_t Index, typename... ElemTypes>
+constexpr decltype(auto) get(mtuple<ElemTypes...>& tuple) noexcept {
+    using base_type  = details::mtuple_helper_t<Index, ElemTypes...>;
+    using value_type = details::mtuple_element_t<Index, ElemTypes...>;
+    return (static_cast<base_type&>(tuple).m_value);
 }
 
-template <std::size_t index, typename... Types>
-constexpr decltype(auto) get(const mtuple<Types...>& tuple) noexcept {
-	using impl_type = details::mtuple_helper_t<index, Types...>;
-	return (static_cast<const impl_type&>(tuple).m_value);
+template <std::size_t Index, typename... ElemTypes>
+constexpr decltype(auto) get(const mtuple<ElemTypes...>& tuple) noexcept {
+    using base_type  = details::mtuple_helper_t<Index, ElemTypes...>;
+    using value_type = details::mtuple_element_t<Index, ElemTypes...>;
+    return (static_cast<const base_type&>(tuple).m_value);
 }
 
-template <std::size_t index, typename... Types>
-constexpr decltype(auto) get(mtuple<Types...>&& tuple) noexcept {
-	using impl_type  = details::mtuple_helper_t<index, Types...>;
-	using value_type = details::mtuple_element_t<index, Types...>;
-	return std::forward<value_type>(static_cast<impl_type&&>(tuple).m_value);
+template <std::size_t Index, typename... ElemTypes>
+constexpr decltype(auto) get(mtuple<ElemTypes...>&& tuple) noexcept {
+    using base_type  = details::mtuple_helper_t<Index, ElemTypes...>;
+    using value_type = details::mtuple_element_t<Index, ElemTypes...>;
+    return std::forward<value_type>(static_cast<base_type&&>(tuple).m_value);
 }
 
 } // namespace meta
@@ -111,9 +121,9 @@ namespace std {
 template <typename... Types>
 struct tuple_size<meta::mtuple<Types...>> : std::integral_constant<std::size_t, sizeof...(Types)> {};
 
-template <std::size_t index, typename... Types>
-struct tuple_element<index, meta::mtuple<Types...>> {
-	using type = meta::details::mtuple_element_t<index, Types...>;
+template <std::size_t Index, typename... Types>
+struct tuple_element<Index, meta::mtuple<Types...>> {
+    using type = meta::details::mtuple_element_t<Index, Types...>;
 };
 
 using meta::get;
