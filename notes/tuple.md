@@ -285,7 +285,7 @@ struct tuple_size<mtuple<Types...>> {
 
 ---
 
-接下来是略微复杂的 `std::std::tuple_element`，它的定义如下:
+接下来是略微复杂的 `std::tuple_element`，它的定义如下:
 
 ```cpp
 template <std::size_t Index, typename... Types>
