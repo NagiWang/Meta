@@ -51,9 +51,9 @@ struct rtuple_impl<Head, Tail...> : public rtuple_impl<Tail...> { ... }
 比如 `rtuple_impl<Type0, Type1, Type2>` 便可展开为
 
 ```cpp
-struct rtuple_impl<Type0, Type1, Type2> : public rtuple_impl<Type1, Type2> {...};
-struct rtuple_impl<Type1, Type2>        : public rtuple_impl<Type2> {...};
-struct rtuple_impl<Type2>               : public rtuple_impl<> {...};
+struct rtuple_impl<Type0, Type1, Type2> : public rtuple_impl<Type1, Type2> { ... };
+struct rtuple_impl<Type1, Type2>        : public rtuple_impl<Type2> { ... };
+struct rtuple_impl<Type2>               : public rtuple_impl<> { ... };
 ```
 
 由于 `rtuple_impl<>` 我们已经实现了，所以递归到这就会停下来。
