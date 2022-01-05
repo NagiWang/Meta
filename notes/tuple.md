@@ -45,7 +45,7 @@ template <> struct rtuple_impl<> {
 
 ```cpp
 template <typename Head, typename... Tail>
-struct rtuple_impl<Head, Tail...> : public rtuple_impl<Tail...> { ... }
+struct rtuple_impl<Head, Tail...> : public rtuple_impl<Tail...> { ... };
 ```
 
 比如 `rtuple_impl<Type0, Type1, Type2>` 便可展开为
