@@ -33,11 +33,10 @@ struct mtuple_impl;
 
 template <std::size_t... Indices, typename... Types>
 struct mtuple_impl<std::index_sequence<Indices...>, Types...> : public mtuple_value<Indices, Types>... {
-    // clang-format off
     template <typename... Values>
     constexpr explicit mtuple_impl(Values&&... values) noexcept
         :  mtuple_value<Indices, Types>(std::forward<Values>(values))... {}
-    // clang-format on
+
     constexpr ~mtuple_impl() noexcept = default;
 };
 
@@ -62,7 +61,7 @@ using mtuple_element_t = typename mtuple_element<Index, Types...>::type;
 template <std::size_t Index, typename ...Types>
 requires (Index < sizeof...(Types))
 struct mtuple_helper {
-	using type = mtuple_value<Index, mtuple_element_t<Index, Types...>>;
+    using type = mtuple_value<Index, mtuple_element_t<Index, Types...>>;
 };
 // clang-format on
 

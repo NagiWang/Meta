@@ -67,7 +67,7 @@ struct rtuple_helper<0, Types...> {
 template <std::size_t Index, typename Head, typename... Tail>
 requires (Index != 0)
 struct rtuple_helper<Index, Head, Tail...> {
-	using type = typename rtuple_helper<Index - 1, Tail...>::type;
+    using type = typename rtuple_helper<Index - 1, Tail...>::type;
 };
 
 template <std::size_t Index, typename... Types>
@@ -82,10 +82,10 @@ struct rtuple : private details::rtuple_impl<Types...> {
     using base_type = details::rtuple_impl<Types...>;
 
     // clang-format off
-	template <typename... Values>
-    requires(sizeof...(Values) == sizeof...(Types))
-	constexpr explicit rtuple(Values&&... values) noexcept
-	    : base_type(std::forward<Values>(values)...) {}
+    template <typename... Values>
+    requires (sizeof...(Values) == sizeof...(Types))
+    constexpr explicit rtuple(Values&&... values) noexcept
+        : base_type(std::forward<Values>(values)...) {}
     // clang-format on
     constexpr ~rtuple() noexcept = default;
 
