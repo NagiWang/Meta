@@ -142,7 +142,7 @@ struct rtuple : private rtuple_impl<Types...> {
 
 ```cpp
 struct mtuple<typename ... Types>
-    : private mtuple_impl<std::make_index_sequence<sizeof...(ElemTypes)>, Types...>;
+    : private mtuple_impl<std::make_index_sequence<sizeof...(Types)>, Types...>;
 
 struct mtuple_impl<std::index_sequence<Indices...>, Types...>
     : public mtuple_value<Indices, Types>...;
