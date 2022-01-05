@@ -22,7 +22,7 @@ struct rtuple_impl<Type2>               : public rtuple_impl<>;
 `rtuple` 的实现重点在于 `rtuple_impl`，首先需要声明 `rtuple_impl`
 
 ```cpp
-template <typename... ElemTypes> struct rtuple_impl;
+template <typename... Types> struct rtuple_impl;
 ```
 
 然后定义其递归基 `rtuple_impl<>`
