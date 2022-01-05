@@ -115,12 +115,12 @@ struct rtuple_impl<Head, Tail...> : public rtuple_impl<Tail...> {
 最后便是用 `rtuple` 做一个简单的封装，隐藏掉 `rtuple_impl` 的实现细节，具体代码如下:
 
 ```cpp
-template <typename... ElemTypes>
-struct rtuple : private rtuple_impl<ElemTypes...> {
-    using base_type = rtuple_impl<ElemTypes...>;
+template <typename... Types>
+struct rtuple : private rtuple_impl<Types...> {
+    using base_type = rtuple_impl<Types...>;
 
     template <typename... Values>
-    requires (sizeof...(Values) == sizeof...(ElemTypes))
+    requires (sizeof...(Values) == sizeof...(Types))
     constexpr explicit rtuple(Values&&... values) noexcept
         : base_type(std::forward<Values>(values)...)
     {}
@@ -132,7 +132,7 @@ struct rtuple : private rtuple_impl<ElemTypes...> {
 };
 ```
 
-显而易见，`rtuple` 并不直接保存数据，它的数据都都保存在了 `private` 继承的基类里面，构造函数将接收到的万能引用序列 `values...` 并转发给基类构造函数。这里的构造函数部分又用到了一个 `requires (sizeof...(Values) == sizeof...(ElemTypes))`，是为了保证 `rtuple` 的模板形参个数与构造函数模板形参个数相同，同样也可以用 [SFINAE](https://zh.cppreference.com/w/cpp/language/sfinae) 来实现。[`sizeof...()`](https://zh.cppreference.com/w/cpp/language/sizeof...) 是 **C++ 11** 中引入的用来在编译期获取形参包大小 ( 即形参个数 ) 的运算符。`rtuple` 的数据元素通过友元函数 `get` 进行访问，具体的 `get` 如何实现会在本文第三部分 [实现结构化绑定声明](##实现结构化绑定声明) 讲到。
+显而易见，`rtuple` 并不直接保存数据，它的数据都都保存在了 `private` 继承的基类里面，构造函数将接收到的万能引用序列 `values...` 并转发给基类构造函数。这里的构造函数部分又用到了一个 `requires (sizeof...(Values) == sizeof...(Types))`，是为了保证 `rtuple` 的模板形参个数与构造函数模板形参个数相同，同样也可以用 [SFINAE](https://zh.cppreference.com/w/cpp/language/sfinae) 来实现。[`sizeof...()`](https://zh.cppreference.com/w/cpp/language/sizeof...) 是 **C++ 11** 中引入的用来在编译期获取形参包大小 ( 即形参个数 ) 的运算符。`rtuple` 的数据元素通过友元函数 `get` 进行访问，具体的 `get` 如何实现会在本文第三部分 [实现结构化绑定声明](##实现结构化绑定声明) 讲到。
 
 ---
 
